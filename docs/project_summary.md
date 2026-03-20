@@ -34,6 +34,7 @@
 - [データ同期の仕組み](file:///Users/tatsu/Downloads/kirilog/docs/explanation/storage_explained.ts): Supabaseとローカルストレージの使い分け。
 - [トースト通知の裏側](file:///Users/tatsu/Downloads/kirilog/docs/explanation/Toast_explained.tsx): Context APIを使った通知システムの設計。
 - [統計計算のロジック](file:///Users/tatsu/Downloads/kirilog/docs/explanation/Statistics_explained.tsx): 生データから統計グラフを作るための計算フロー。
+- [プロの品質管理 (ESLint)](file:///Users/tatsu/Downloads/kirilog/docs/explanation/QualityControl_explained.md): 未使用コードや型エラーを自動で防ぐ仕組み。
 
 ## 3. 今後の発展へのヒント
 - **タグ機能の強化**: 現在は内容の1行目をカテゴリとしていますが、[仕事][休憩]のようなタグを正式に導入すると、統計がさらに正確になります。
