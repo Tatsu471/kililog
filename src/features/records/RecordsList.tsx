@@ -6,19 +6,25 @@ import type { LogEntry } from '../../lib/storage'
 
 export function RecordsList() {
   const [entries, setEntries] = useState<LogEntry[]>([])
+  const [loading, setLoading] = useState(true)
   const today = format(new Date(), 'yyyy-MM-dd')
 
   useEffect(() => {
-    const all = storage.getEntries()
-    const todayEntries = all
-      .filter(e => e.date === today)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime))
-    setEntries(todayEntries)
+    const fetchEntries = async () => {
+      setLoading(true)
+      const all = await storage.getEntries()
+      const todayEntries = all
+        .filter(e => e.date === today)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime))
+      setEntries(todayEntries)
+      setLoading(false)
+    }
+    fetchEntries()
   }, [today])
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (!confirm('削除してもよろしいですか？')) return
-    storage.deleteEntry(id)
+    await storage.deleteEntry(id)
     setEntries(entries.filter(e => e.id !== id))
   }
 
@@ -47,7 +53,12 @@ export function RecordsList() {
         </button>
       </div>
 
-      {entries.length === 0 ? (
+      {loading ? (
+        <div className="bg-white/5 p-16 rounded-[2rem] border border-white/10 text-center backdrop-blur-sm">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-slate-400 font-medium text-sm">読み込み中...</p>
+        </div>
+      ) : entries.length === 0 ? (
         <div className="bg-white/5 p-16 rounded-[2rem] border border-dashed border-white/10 text-center backdrop-blur-sm">
           <p className="text-slate-500 font-medium">記録がありません</p>
         </div>

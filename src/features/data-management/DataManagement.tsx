@@ -1,13 +1,18 @@
+import { useState } from 'react'
 import { Download } from 'lucide-react'
 import { storage } from '../../lib/storage'
 
 export function DataManagement() {
-  const exportCsv = () => {
-    const entries = storage.getEntries()
-    if (entries.length === 0) {
-      alert('データがありません')
-      return
-    }
+  const [exporting, setExporting] = useState(false)
+
+  const exportCsv = async () => {
+    setExporting(true)
+    try {
+      const entries = await storage.getEntries()
+      if (entries.length === 0) {
+        alert('データがありません')
+        return
+      }
 
     const headers = ['id', 'date', 'startTime', 'endTime', 'content', 'memo']
     const csvContent = [
@@ -22,15 +27,21 @@ export function DataManagement() {
       ].join(','))
     ].join('\n')
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.setAttribute('href', url)
-    link.setAttribute('download', `kirilog_export_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.setAttribute('href', url)
+      link.setAttribute('download', `kirilog_export_${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (error) {
+      console.error('Export failed:', error)
+      alert('エクスポートに失敗しました')
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -45,10 +56,15 @@ export function DataManagement() {
           </p>
           <button
             onClick={exportCsv}
-            className="w-full flex items-center justify-center gap-3 bg-slate-100/10 text-white py-4 rounded-2xl font-bold border border-white/10 hover:bg-white/10 active:scale-[0.98] transition-all duration-300 backdrop-blur-sm group"
+            disabled={exporting}
+            className="w-full flex items-center justify-center gap-3 bg-slate-100/10 text-white py-4 rounded-2xl font-bold border border-white/10 hover:bg-white/10 active:scale-[0.98] transition-all duration-300 backdrop-blur-sm group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download size={20} className="text-blue-400 group-hover:scale-110 transition-transform" />
-            CSVをダウンロード
+            {exporting ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-blue-400"></div>
+            ) : (
+              <Download size={20} className="text-blue-400 group-hover:scale-110 transition-transform" />
+            )}
+            {exporting ? '準備中...' : 'CSVをダウンロード'}
           </button>
         </div>
 

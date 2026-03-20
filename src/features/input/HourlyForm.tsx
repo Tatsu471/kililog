@@ -18,52 +18,61 @@ export function HourlyForm() {
     setEndTime(format(lastHourEnd, 'HH:00'))
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!content.trim()) return
+    if (!content.trim() || submitting) return
 
-    const date = format(new Date(), 'yyyy-MM-dd')
-    const overlaps = storage.findOverlapping(date, startTime, endTime)
+    setSubmitting(true)
+    try {
+      const date = format(new Date(), 'yyyy-MM-dd')
+      const overlaps = storage.findOverlapping(date, startTime, endTime)
 
-    if (overlaps.length > 0) {
-      const confirmMsg = `その時間帯には既に以下の記録があります：\n${overlaps.map(o => `・${o.startTime}-${o.endTime}: ${o.content}`).join('\n')}\n\n上書きしますか？（キャンセルで既存データへ追記、どちらも選ばない場合は中止）`
-      const result = confirm(confirmMsg)
-      
-      if (result) {
-        // Overwrite: delete overlaps and save new
-        overlaps.forEach(o => storage.deleteEntry(o.id))
-      } else {
-        // Append: normally we'd ask more specific, but for now let's just append note
-        const appendResult = confirm('既存のデータに内容を追記しますか？')
-        if (appendResult) {
-          const target = overlaps[0] // Simplify to first one
-          storage.updateEntry(target.id, { 
-            content: `${target.content}\n${content}`,
-            memo: memo ? `${target.memo || ''}\n${memo}`.trim() : target.memo
-          })
-          setContent('')
-          setMemo('')
-          alert('追記しました')
-          return
+      if (overlaps.length > 0) {
+        const confirmMsg = `その時間帯には既に以下の記録があります：\n${overlaps.map(o => `・${o.startTime}-${o.endTime}: ${o.content}`).join('\n')}\n\n上書きしますか？（キャンセルで既存データへ追記、どちらも選ばない場合は中止）`
+        const result = confirm(confirmMsg)
+        
+        if (result) {
+          // Overwrite: delete overlaps and save new
+          for (const o of overlaps) {
+            await storage.deleteEntry(o.id)
+          }
         } else {
-          return
+          // Append
+          const appendResult = confirm('既存のデータに内容を追記しますか？')
+          if (appendResult) {
+            const target = overlaps[0] // Simplify to first one
+            await storage.updateEntry(target.id, { 
+              content: `${target.content}\n${content}`,
+              memo: memo ? `${target.memo || ''}\n${memo}`.trim() : target.memo
+            })
+            setContent('')
+            setMemo('')
+            alert('追記しました')
+            return
+          } else {
+            return
+          }
         }
       }
-    }
 
-    const newEntry = {
-      id: crypto.randomUUID(),
-      date,
-      startTime,
-      endTime,
-      content,
-      memo: memo.trim() || undefined
-    }
+      const newEntry = {
+        id: crypto.randomUUID(),
+        date,
+        startTime,
+        endTime,
+        content,
+        memo: memo.trim() || undefined
+      }
 
-    storage.saveEntry(newEntry)
-    setContent('')
-    setMemo('')
-    alert('記録しました')
+      await storage.saveEntry(newEntry)
+      setContent('')
+      setMemo('')
+      alert('記録しました')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -101,9 +110,10 @@ export function HourlyForm() {
 
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:bg-blue-500 hover:shadow-[0_0_25px_rgba(37,99,235,0.5)] active:scale-[0.98] transition-all duration-300"
+        disabled={submitting}
+        className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:bg-blue-500 hover:shadow-[0_0_25px_rgba(37,99,235,0.5)] active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        記録する
+        {submitting ? '記録中...' : '記録する'}
       </button>
     </form>
   )
