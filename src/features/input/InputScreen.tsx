@@ -9,7 +9,7 @@ export function InputScreen() {
   const [mode, setMode] = useState<InputMode>('hourly')
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-sm">
         <button
           onClick={() => setMode('hourly')}

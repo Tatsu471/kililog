@@ -1,8 +1,10 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { format } from 'date-fns'
 import { storage } from '../../lib/storage'
+import { useToast } from '../../components/ui/Toast'
 
 export function RangeForm() {
+  const toast = useToast()
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('10:00')
   const [content, setContent] = useState('')
@@ -37,7 +39,7 @@ export function RangeForm() {
             })
             setContent('')
             setMemo('')
-            alert('追記しました')
+            toast.success('追記しました')
             return
           } else {
             return
@@ -57,14 +59,14 @@ export function RangeForm() {
       await storage.saveEntry(newEntry)
       setContent('')
       setMemo('')
-      alert('記録しました')
+      toast.success('記録しました')
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-semibold text-slate-400 mb-2 ml-1">

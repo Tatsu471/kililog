@@ -6,11 +6,28 @@ import { RecordsList } from './features/records/RecordsList'
 import { DataManagement } from './features/data-management/DataManagement'
 import { format } from 'date-fns'
 import { ja } from 'date-fns/locale'
+import { ToastProvider } from './components/ui/Toast'
+import { settings } from './lib/settings'
+import type { DateFormat } from './lib/settings'
+import { useEffect } from 'react'
 
 type Screen = 'input' | 'records' | 'data'
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('input')
+  const [dateFormat, setDateFormat] = useState<DateFormat>(settings.get().dateFormat)
+
+  useEffect(() => {
+    const handleSettingsUpdate = () => {
+      setDateFormat(settings.get().dateFormat)
+    }
+    window.addEventListener('kirilog_settings_updated', handleSettingsUpdate)
+    return () => window.removeEventListener('kirilog_settings_updated', handleSettingsUpdate)
+  }, [])
+
+  const formattedDate = dateFormat === 'japanese' 
+    ? format(new Date(), 'yyyy年M月d日 (E)', { locale: ja })
+    : format(new Date(), 'yyyy/M/d EEE')
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 pb-24">
@@ -18,12 +35,12 @@ function App() {
         <img src="/logo.png" alt="KiriLog" className="h-8 brightness-0 invert opacity-90" />
       </header>
 
-      <main className="container mx-auto max-w-md p-4 pt-20">
+      <main className="container mx-auto max-w-md p-4 pt-16">
         {currentScreen === 'input' && (
-          <section className="space-y-6">
-            <div className="text-center py-6">
+          <section className="space-y-4">
+            <div className="text-center py-4">
               <h2 className="text-2xl font-semibold tracking-tight">
-                {format(new Date(), 'yyyy年M月d日 (E)', { locale: ja })}
+                {formattedDate}
               </h2>
             </div>
             <InputScreen />
@@ -76,4 +93,10 @@ function App() {
   )
 }
 
-export default App
+export default function AppWrapper() {
+  return (
+    <ToastProvider>
+      <App />
+    </ToastProvider>
+  )
+}

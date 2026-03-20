@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { format, subHours, startOfHour } from 'date-fns'
 import { storage } from '../../lib/storage'
+import { useToast } from '../../components/ui/Toast'
 
 export function HourlyForm() {
+  const toast = useToast()
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [content, setContent] = useState('')
@@ -49,7 +51,7 @@ export function HourlyForm() {
             })
             setContent('')
             setMemo('')
-            alert('追記しました')
+            toast.success('追記しました')
             return
           } else {
             return
@@ -69,15 +71,15 @@ export function HourlyForm() {
       await storage.saveEntry(newEntry)
       setContent('')
       setMemo('')
-      alert('記録しました')
+      toast.success('記録しました')
     } finally {
       setSubmitting(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="flex items-center justify-between mb-2 pb-4 border-b border-white/5">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/5">
         <span className="text-sm font-medium text-slate-400">対象時間</span>
         <span className="text-xl font-bold text-blue-400 drop-shadow-[0_0_10px_rgba(96,165,250,0.3)]">
           {startTime} - {endTime}
