@@ -22,15 +22,17 @@ const mapFromDB = (record: Record<string, unknown>): LogEntry => ({
   memo: record.memo as string | undefined
 })
 
-// Helper to map LogEntry to DB record
-const mapToDB = (entry: LogEntry) => ({
-  id: entry.id,
-  date: entry.date,
-  start_time: entry.startTime,
-  end_time: entry.endTime,
-  content: entry.content,
-  memo: entry.memo
-})
+// Helper to map LogEntry to DB record (total or partial)
+const mapToDB = (entry: Partial<LogEntry>) => {
+  const mapped: Record<string, any> = {}
+  if (entry.id) mapped.id = entry.id
+  if (entry.date) mapped.date = entry.date
+  if (entry.startTime) mapped.start_time = entry.startTime
+  if (entry.endTime) mapped.end_time = entry.endTime
+  if (entry.content !== undefined) mapped.content = entry.content
+  if (entry.memo !== undefined) mapped.memo = entry.memo
+  return mapped
+}
 
 export const storage = {
   getEntries: async (): Promise<LogEntry[]> => {
@@ -105,6 +107,71 @@ export const storage = {
   getEntriesLocal: (): LogEntry[] => {
     const data = localStorage.getItem(STORAGE_KEY)
     return data ? JSON.parse(data) : []
+  },
+
+  // Intelligent conflict resolution
+  resolveConflicts: async (
+    date: string, 
+    startTime: string, 
+    endTime: string, 
+    content: string, 
+    memo: string | undefined,
+    type: 'smart' | 'append'
+  ): Promise<void> => {
+    const overlaps = storage.findOverlapping(date, startTime, endTime)
+    if (overlaps.length === 0) return
+
+    if (type === 'append') {
+      const target = overlaps[0]
+      await storage.updateEntry(target.id, {
+        content: `${target.content}\n${content}`,
+        memo: memo ? `${target.memo || ''}\n${memo}`.trim() : target.memo
+      })
+      return
+    }
+
+    // Smart Resolve (Auto-Trim / Split / Delete)
+    const newStart = parseISO(`${date}T${startTime}`)
+    const newEnd = parseISO(`${date}T${endTime}`)
+
+    for (const old of overlaps) {
+      const oldStart = parseISO(`${old.date}T${old.startTime}`)
+      const oldEnd = parseISO(`${old.date}T${old.endTime}`)
+
+      // Case 1: Fully enveloped by new -> Delete
+      if (oldStart >= newStart && oldEnd <= newEnd) {
+        await storage.deleteEntry(old.id)
+        continue
+      }
+
+      // Case 2: New starts during Old -> Trim Old End
+      if (oldStart < newStart && oldEnd > newStart && oldEnd <= newEnd) {
+        await storage.updateEntry(old.id, { endTime: startTime })
+        continue
+      }
+
+      // Case 3: New ends during Old -> Trim Old Start
+      if (oldStart >= newStart && oldStart < newEnd && oldEnd > newEnd) {
+        await storage.updateEntry(old.id, { startTime: endTime })
+        continue
+      }
+
+      // Case 4: New is inside Old -> Split Old into Two
+      if (oldStart < newStart && oldEnd > newEnd) {
+        // Create the "After" piece first
+        const afterPiece: LogEntry = {
+          id: crypto.randomUUID(),
+          date: old.date,
+          startTime: endTime,
+          endTime: old.endTime,
+          content: old.content,
+          memo: old.memo
+        }
+        await storage.saveEntry(afterPiece)
+        // Trim the original to become the "Before" piece
+        await storage.updateEntry(old.id, { endTime: startTime })
+      }
+    }
   },
 
   findOverlapping: (date: string, startTime: string, endTime: string): LogEntry[] => {

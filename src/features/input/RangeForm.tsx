@@ -22,24 +22,18 @@ export function RangeForm() {
       const overlaps = storage.findOverlapping(date, startTime, endTime)
 
       if (overlaps.length > 0) {
-        const confirmMsg = `その時間帯には既に以下の記録があります：\n${overlaps.map(o => `・${o.startTime}-${o.endTime}: ${o.content}`).join('\n')}\n\n上書きしますか？（キャンセルで既存データへ追記、どちらも選ばない場合は中止）`
+        const confirmMsg = `その時間帯には既に以下の記録があります：\n${overlaps.map(o => `・${o.startTime}-${o.endTime}: ${o.content}`).join('\n')}\n\n「自動調整」して保存しますか？\n（既存の記録を短縮・分割して、新しい記録を優先します）\n\n※[キャンセル] を押すと、既存の記録へ「追記」するか選択できます。`
         const result = confirm(confirmMsg)
         
         if (result) {
-          for (const o of overlaps) {
-            await storage.deleteEntry(o.id)
-          }
+          await storage.resolveConflicts(date, startTime, endTime, content, memo, 'smart')
         } else {
-          const appendResult = confirm('既存のデータに内容を追記しますか？')
+          const appendResult = confirm('既存のデータに内容を統合（追記）しますか？')
           if (appendResult) {
-            const target = overlaps[0]
-            await storage.updateEntry(target.id, { 
-              content: `${target.content}\n${content}`,
-              memo: memo ? `${target.memo || ''}\n${memo}`.trim() : target.memo
-            })
+            await storage.resolveConflicts(date, startTime, endTime, content, memo, 'append')
             setContent('')
             setMemo('')
-            toast.success('追記しました')
+            toast.success('統合しました')
             return
           } else {
             return
