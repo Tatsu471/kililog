@@ -10,12 +10,14 @@ export function InputScreen() {
 
   return (
     <div className="space-y-6">
-      <div className="flex bg-slate-100 p-1 rounded-xl">
+      <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 backdrop-blur-sm">
         <button
           onClick={() => setMode('hourly')}
           className={cn(
-            "flex-1 py-2 text-sm font-medium rounded-lg transition-all",
-            mode === 'hourly' ? "bg-white shadow-sm text-blue-600" : "text-slate-500 hover:text-slate-700"
+            "flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300",
+            mode === 'hourly' 
+              ? "bg-blue-600/20 text-blue-400 shadow-inner border border-white/10" 
+              : "text-slate-400 hover:text-slate-200"
           )}
         >
           定時入力
@@ -23,15 +25,17 @@ export function InputScreen() {
         <button
           onClick={() => setMode('range')}
           className={cn(
-            "flex-1 py-2 text-sm font-medium rounded-lg transition-all",
-            mode === 'range' ? "bg-white shadow-sm text-blue-600" : "text-slate-500 hover:text-slate-700"
+            "flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300",
+            mode === 'range' 
+              ? "bg-blue-600/20 text-blue-400 shadow-inner border border-white/10" 
+              : "text-slate-400 hover:text-slate-200"
           )}
         >
           範囲入力
         </button>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      <div className="bg-white/10 backdrop-blur-md p-6 rounded-[2rem] shadow-2xl border border-white/20">
         {mode === 'hourly' ? <HourlyForm /> : <RangeForm />}
       </div>
     </div>

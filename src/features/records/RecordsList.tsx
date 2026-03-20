@@ -35,43 +35,50 @@ export function RecordsList() {
   }
 
   return (
-    <section className="space-y-4 pb-12">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-lg font-medium text-slate-700">今日の記録</h2>
+    <section className="space-y-6 pb-12">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold tracking-tight text-white">今日の記録</h2>
         <button
           onClick={copyAsMarkdown}
-          className="flex items-center gap-1.5 text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+          className="flex items-center gap-2 text-xs font-semibold text-slate-100 border border-white/20 px-4 py-2 rounded-xl hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"
         >
-          <Copy size={16} />
+          <Copy size={14} />
           Markdown出力
         </button>
       </div>
 
       {entries.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl border border-dashed border-slate-200 text-center">
-          <p className="text-slate-400">記録がありません</p>
+        <div className="bg-white/5 p-16 rounded-[2rem] border border-dashed border-white/10 text-center backdrop-blur-sm">
+          <p className="text-slate-500 font-medium">記録がありません</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="relative pl-8 space-y-8 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gradient-to-b before:from-blue-500/50 before:via-white/10 before:to-transparent">
           {entries.map(entry => (
-            <div key={entry.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm group">
-              <div className="flex justify-between items-start mb-1">
-                <span className="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                  {entry.startTime} - {entry.endTime}
-                </span>
-                <button
-                  onClick={() => handleDelete(entry.id)}
-                  className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                >
-                  <Trash2 size={16} />
-                </button>
+            <div key={entry.id} className="relative group">
+              {/* Timeline Node */}
+              <div className="absolute -left-[27px] top-1.5 w-[14px] h-[14px] rounded-full bg-blue-500 border-2 border-slate-900 shadow-[0_0_10px_rgba(59,130,246,0.6)] z-10 group-hover:scale-125 transition-transform duration-300" />
+              
+              <div className="bg-white/10 backdrop-blur-md p-5 rounded-2xl border border-white/20 shadow-xl transition-all duration-300 hover:bg-white/15 hover:border-white/30">
+                <div className="flex justify-between items-start mb-3">
+                  <span className="text-xs font-bold text-blue-400 bg-blue-400/10 px-2.5 py-1 rounded-lg border border-blue-400/20">
+                    {entry.startTime} - {entry.endTime}
+                  </span>
+                  <button
+                    onClick={() => handleDelete(entry.id)}
+                    className="text-slate-500 hover:text-red-400 transition-colors p-1"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <p className="text-slate-100 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
+                {entry.memo && (
+                  <div className="mt-4 pt-3 border-t border-white/5">
+                    <p className="text-sm text-slate-400 italic">
+                      {entry.memo}
+                    </p>
+                  </div>
+                )}
               </div>
-              <p className="text-slate-800 whitespace-pre-wrap">{entry.content}</p>
-              {entry.memo && (
-                <p className="mt-2 text-sm text-slate-500 border-l-2 border-slate-100 pl-3">
-                  {entry.memo}
-                </p>
-              )}
             </div>
           ))}
         </div>
