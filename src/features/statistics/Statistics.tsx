@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { format, parseISO, differenceInMinutes, subDays } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { storage, type LogEntry } from '../../lib/storage'
+import { storage } from '../../lib/storage'
 import { PieChart, BarChart3, Clock } from 'lucide-react'
 
 export function Statistics() {

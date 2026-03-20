@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Download, Trash2, Settings as SettingsIcon } from 'lucide-react'
+import { useState } from 'react'
+import { Download, Settings as SettingsIcon } from 'lucide-react'
 import { storage } from '../../lib/storage'
 import { settings } from '../../lib/settings'
 import type { DateFormat } from '../../lib/settings'
@@ -63,48 +63,48 @@ export function DataManagement({ onNavigateToStats }: DataManagementProps) {
       <h2 className="text-xl font-bold tracking-tight text-white px-1">データ管理</h2>
       
       <div className="space-y-6">
-      <section className="bg-white/10 backdrop-blur-md p-6 rounded-[2rem] border border-white/20 shadow-xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
-            <SettingsIcon size={20} />
+        <section className="bg-white/10 backdrop-blur-md p-6 rounded-[2rem] border border-white/20 shadow-xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
+              <SettingsIcon size={20} />
+            </div>
+            <h3 className="text-xl font-bold">設定</h3>
           </div>
-          <h3 className="text-xl font-bold">設定</h3>
-        </div>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-400 mb-3 ml-1">
-              日付表示形式
-            </label>
-            <div className="flex bg-black/20 p-1 rounded-xl border border-white/5">
-              <button
-                onClick={() => handleDateFormatChange('japanese')}
-                className={cn(
-                  "flex-1 py-2 text-xs font-semibold rounded-lg transition-all",
-                  dateFormat === 'japanese'
-                    ? "bg-blue-600/30 text-blue-400 shadow-inner"
-                    : "text-slate-500 hover:text-slate-300"
-                )}
-              >
-                2026年3月20日 (金)
-              </button>
-              <button
-                onClick={() => handleDateFormatChange('slash')}
-                className={cn(
-                  "flex-1 py-2 text-xs font-semibold rounded-lg transition-all",
-                  dateFormat === 'slash'
-                    ? "bg-blue-600/30 text-blue-400 shadow-inner"
-                    : "text-slate-500 hover:text-slate-300"
-                )}
-              >
-                2026/3/20 Fri
-              </button>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-400 mb-3 ml-1">
+                日付表示形式
+              </label>
+              <div className="flex bg-black/20 p-1 rounded-xl border border-white/5">
+                <button
+                  onClick={() => handleDateFormatChange('japanese')}
+                  className={cn(
+                    "flex-1 py-2 text-xs font-semibold rounded-lg transition-all",
+                    dateFormat === 'japanese'
+                      ? "bg-blue-600/30 text-blue-400 shadow-inner"
+                      : "text-slate-500 hover:text-slate-300"
+                  )}
+                >
+                  2026年3月20日 (金)
+                </button>
+                <button
+                  onClick={() => handleDateFormatChange('slash')}
+                  className={cn(
+                    "flex-1 py-2 text-xs font-semibold rounded-lg transition-all",
+                    dateFormat === 'slash'
+                      ? "bg-blue-600/30 text-blue-400 shadow-inner"
+                      : "text-slate-500 hover:text-slate-300"
+                  )}
+                >
+                  2026/3/20 Fri
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <div className="bg-white/10 backdrop-blur-md p-6 rounded-[2rem] border border-white/20 shadow-2xl">
+        <div className="bg-white/10 backdrop-blur-md p-6 rounded-[2rem] border border-white/20 shadow-2xl">
           <h3 className="text-lg font-bold mb-3 text-white">データのバックアップ</h3>
           <p className="text-sm text-slate-400 mb-8 leading-relaxed">
             これまでの全記録をCSV形式で保存します。定期的なバックアップをお勧めします。
