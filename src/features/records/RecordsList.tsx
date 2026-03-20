@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
-import { Copy, Trash2 } from 'lucide-react'
+import { Copy, Trash2, Pencil, Save, X } from 'lucide-react'
 import { storage } from '../../lib/storage'
 import type { LogEntry } from '../../lib/storage'
+import { useToast } from '../../components/ui/Toast'
 
 export function RecordsList() {
+  const toast = useToast()
   const [entries, setEntries] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [editMemo, setEditMemo] = useState('')
   const today = format(new Date(), 'yyyy-MM-dd')
 
   useEffect(() => {
@@ -26,6 +31,25 @@ export function RecordsList() {
     if (!confirm('削除してもよろしいですか？')) return
     await storage.deleteEntry(id)
     setEntries(entries.filter(e => e.id !== id))
+    toast.success('削除しました')
+  }
+
+  const handleStartEdit = (entry: LogEntry) => {
+    setEditingId(entry.id)
+    setEditContent(entry.content)
+    setEditMemo(entry.memo || '')
+  }
+
+  const handleUpdate = async (id: string) => {
+    if (!editContent.trim()) {
+      toast.error('内容を入力してください')
+      return
+    }
+
+    await storage.updateEntry(id, { content: editContent, memo: editMemo })
+    setEntries(entries.map(e => e.id === id ? { ...e, content: editContent, memo: editMemo } : e))
+    setEditingId(null)
+    toast.success('更新しました')
   }
 
   const copyAsMarkdown = () => {
@@ -37,11 +61,11 @@ export function RecordsList() {
     })
 
     navigator.clipboard.writeText(md)
-    alert('Markdown形式でコピーしました')
+    toast.success('Markdown形式でコピーしました')
   }
 
   return (
-    <section className="space-y-6 pb-12">
+    <section className="space-y-6 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold tracking-tight text-white">今日の記録</h2>
         <button
@@ -74,20 +98,70 @@ export function RecordsList() {
                   <span className="text-xs font-bold text-blue-400 bg-blue-400/10 px-2.5 py-1 rounded-lg border border-blue-400/20">
                     {entry.startTime} - {entry.endTime}
                   </span>
-                  <button
-                    onClick={() => handleDelete(entry.id)}
-                    className="text-slate-500 hover:text-red-400 transition-colors p-1"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-                <p className="text-slate-100 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
-                {entry.memo && (
-                  <div className="mt-4 pt-3 border-t border-white/5">
-                    <p className="text-sm text-slate-400 italic">
-                      {entry.memo}
-                    </p>
+                  <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                    {editingId === entry.id ? (
+                      <>
+                        <button
+                          onClick={() => handleUpdate(entry.id)}
+                          className="text-emerald-400 hover:text-emerald-300 transition-colors p-1"
+                        >
+                          <Save size={16} />
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="text-slate-500 hover:text-slate-400 transition-colors p-1"
+                        >
+                          <X size={16} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleStartEdit(entry)}
+                          className="text-slate-500 hover:text-blue-400 transition-colors p-1"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(entry.id)}
+                          className="text-slate-500 hover:text-red-400 transition-colors p-1"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    )}
                   </div>
+                </div>
+
+                {editingId === entry.id ? (
+                  <div className="space-y-3">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-all resize-none"
+                      rows={3}
+                      placeholder="内容を入力してください"
+                      autoFocus
+                    />
+                    <input
+                      type="text"
+                      value={editMemo}
+                      onChange={(e) => setEditMemo(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-slate-400 focus:outline-none focus:border-blue-500/50 transition-all"
+                      placeholder="メモ（任意）"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-slate-100 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
+                    {entry.memo && (
+                      <div className="mt-4 pt-3 border-t border-white/5">
+                        <p className="text-sm text-slate-400 italic">
+                          {entry.memo}
+                        </p>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>

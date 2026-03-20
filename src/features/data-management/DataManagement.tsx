@@ -5,7 +5,11 @@ import { settings } from '../../lib/settings'
 import type { DateFormat } from '../../lib/settings'
 import { cn } from '../../lib/utils'
 
-export function DataManagement() {
+interface DataManagementProps {
+  onNavigateToStats: () => void
+}
+
+export function DataManagement({ onNavigateToStats }: DataManagementProps) {
   const [exporting, setExporting] = useState(false)
   const currentSettings = settings.get()
   const [dateFormat, setDateFormat] = useState<DateFormat>(currentSettings.dateFormat)
@@ -121,14 +125,16 @@ export function DataManagement() {
 
         <div className="bg-white/5 backdrop-blur-sm p-8 rounded-[2rem] border border-white/5 shadow-xl relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <h3 className="text-lg font-bold mb-3 text-slate-300">統計（準備中）</h3>
-          <p className="text-sm text-slate-500 leading-relaxed mb-4">
-            1週間の稼働状況などを可視化する予定です。
+          <h3 className="text-lg font-bold mb-3 text-slate-300">統計情報</h3>
+          <p className="text-sm text-slate-500 leading-relaxed mb-6">
+            今日の活動状況や週次のトレンドを確認できます。
           </p>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
-            <span className="w-2 h-2 rounded-full bg-slate-600 animate-pulse" />
-            <span className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Coming Soon</span>
-          </div>
+          <button
+            onClick={onNavigateToStats}
+            className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600/20 text-blue-400 rounded-full border border-blue-500/20 hover:bg-blue-600/30 transition-all font-bold text-sm"
+          >
+            統計を表示する
+          </button>
         </div>
       </div>
     </section>
