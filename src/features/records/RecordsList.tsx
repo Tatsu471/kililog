@@ -4,6 +4,7 @@ import { Copy, Trash2, Pencil, Save, X } from 'lucide-react'
 import { storage } from '../../lib/storage'
 import type { LogEntry } from '../../lib/storage'
 import { useToast } from '../../components/ui/Toast'
+import { ConfirmModal } from '../../components/ui/ConfirmModal'
 
 export function RecordsList() {
   const toast = useToast()
@@ -12,6 +13,10 @@ export function RecordsList() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
   const [editMemo, setEditMemo] = useState('')
+  
+  // Modal State
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null)
+
   const today = format(new Date(), 'yyyy-MM-dd')
 
   useEffect(() => {
@@ -27,10 +32,11 @@ export function RecordsList() {
     fetchEntries()
   }, [today])
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('削除してもよろしいですか？')) return
-    await storage.deleteEntry(id)
-    setEntries(entries.filter(e => e.id !== id))
+  const confirmDelete = async () => {
+    if (!deleteTargetId) return
+    await storage.deleteEntry(deleteTargetId)
+    setEntries(entries.filter(e => e.id !== deleteTargetId))
+    setDeleteTargetId(null)
     toast.success('削除しました')
   }
 
@@ -123,7 +129,7 @@ export function RecordsList() {
                           <Pencil size={16} />
                         </button>
                         <button
-                          onClick={() => handleDelete(entry.id)}
+                          onClick={() => setDeleteTargetId(entry.id)}
                           className="text-slate-500 hover:text-red-400 transition-colors p-1"
                         >
                           <Trash2 size={16} />
@@ -168,6 +174,16 @@ export function RecordsList() {
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={!!deleteTargetId}
+        title="記録の削除"
+        message="この記録を削除してもよろしいですか？"
+        confirmLabel="削除する"
+        isDestructive={true}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
     </section>
   )
 }

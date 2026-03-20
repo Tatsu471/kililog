@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { format } from 'date-fns'
 import { storage } from '../../lib/storage'
 import { useToast } from '../../components/ui/Toast'
+import { ConfirmModal } from '../../components/ui/ConfirmModal'
 
 export function RangeForm() {
   const toast = useToast()
@@ -9,11 +10,21 @@ export function RangeForm() {
   const [endTime, setEndTime] = useState('10:00')
   const [content, setContent] = useState('')
   const [memo, setMemo] = useState('')
-
   const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  // Modal State
+  const [showOverlapModal, setShowOverlapModal] = useState(false)
+  const [overlapData, setOverlapData] = useState<{
+    date: string,
+    startTime: string,
+    endTime: string,
+    content: string,
+    memo: string,
+    msg: string
+  } | null>(null)
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault()
     if (!content.trim() || submitting) return
 
     setSubmitting(true)
@@ -23,39 +34,88 @@ export function RangeForm() {
 
       if (overlaps.length > 0) {
         const confirmMsg = `その時間帯には既に以下の記録があります：\n${overlaps.map(o => `・${o.startTime}-${o.endTime}: ${o.content}`).join('\n')}\n\n「自動調整」して保存しますか？\n（既存の記録を短縮・分割して、新しい記録を優先します）\n\n※[キャンセル] を押すと、既存の記録へ「追記」するか選択できます。`
-        const result = confirm(confirmMsg)
         
-        if (result) {
-          await storage.resolveConflicts(date, startTime, endTime, content, memo, 'smart')
-        } else {
-          const appendResult = confirm('既存のデータに内容を統合（追記）しますか？')
-          if (appendResult) {
-            await storage.resolveConflicts(date, startTime, endTime, content, memo, 'append')
-            setContent('')
-            setMemo('')
-            toast.success('統合しました')
-            return
-          } else {
-            return
-          }
-        }
+        setOverlapData({ date, startTime, endTime, content, memo, msg: confirmMsg })
+        setShowOverlapModal(true)
+        setSubmitting(false)
+        return
       }
 
-      const newEntry = {
-        id: crypto.randomUUID(),
-        date,
-        startTime,
-        endTime,
-        content,
-        memo: memo.trim() || undefined
-      }
+      await executeSave(date, startTime, endTime, content, memo)
+    } catch (err) {
+      toast.error('エラーが発生しました')
+      console.error(err)
+      setSubmitting(false)
+    }
+  }
 
-      await storage.saveEntry(newEntry)
+  const executeSave = async (date: string, st: string, et: string, c: string, m: string) => {
+    const newEntry = {
+      id: crypto.randomUUID(),
+      date,
+      startTime: st,
+      endTime: et,
+      content: c,
+      memo: m.trim() || undefined
+    }
+
+    await storage.saveEntry(newEntry)
+    setContent('')
+    setMemo('')
+    toast.success('記録しました')
+    setSubmitting(false)
+  }
+
+  const handleSmartResolve = async () => {
+    if (!overlapData) return
+    setSubmitting(true)
+    setShowOverlapModal(false)
+    try {
+      await storage.resolveConflicts(
+        overlapData.date, 
+        overlapData.startTime, 
+        overlapData.endTime, 
+        overlapData.content, 
+        overlapData.memo, 
+        'smart'
+      )
+      await executeSave(
+        overlapData.date, 
+        overlapData.startTime, 
+        overlapData.endTime, 
+        overlapData.content, 
+        overlapData.memo
+      )
+      toast.success('自動調整して記録しました')
+    } catch (err) {
+      toast.error('保存に失敗しました')
+      setSubmitting(false)
+    } finally {
+      setOverlapData(null)
+    }
+  }
+
+  const handleAppendResolve = async () => {
+    if (!overlapData) return
+    setSubmitting(true)
+    setShowOverlapModal(false)
+    try {
+      await storage.resolveConflicts(
+        overlapData.date, 
+        overlapData.startTime, 
+        overlapData.endTime, 
+        overlapData.content, 
+        overlapData.memo, 
+        'append'
+      )
+      toast.success('既存の記録に追記しました')
       setContent('')
       setMemo('')
-      toast.success('記録しました')
+    } catch (err) {
+      toast.error('保存に失敗しました')
     } finally {
       setSubmitting(false)
+      setOverlapData(null)
     }
   }
 
@@ -117,6 +177,16 @@ export function RangeForm() {
       >
         {submitting ? '記録中...' : '記録する'}
       </button>
+
+      <ConfirmModal
+        isOpen={showOverlapModal}
+        title="時間帯の重複"
+        message={overlapData?.msg || ''}
+        confirmLabel="自動調整する"
+        cancelLabel="既存の記録へ追記"
+        onConfirm={handleSmartResolve}
+        onCancel={handleAppendResolve}
+      />
     </form>
   )
 }
