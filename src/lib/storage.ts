@@ -1,4 +1,4 @@
-import { isWithinInterval, parseISO } from 'date-fns'
+import { parseISO, isWithinInterval } from 'date-fns'
 import { supabase } from './supabase'
 
 export interface LogEntry {
@@ -13,13 +13,13 @@ export interface LogEntry {
 const STORAGE_KEY = 'kirilog_entries'
 
 // Helper to map DB record to LogEntry
-const mapFromDB = (record: any): LogEntry => ({
-  id: record.id,
-  date: record.date,
-  startTime: record.start_time.slice(0, 5), // HH:mm:ss -> HH:mm
-  endTime: record.end_time.slice(0, 5),   // HH:mm:ss -> HH:mm
-  content: record.content,
-  memo: record.memo
+const mapFromDB = (record: Record<string, unknown>): LogEntry => ({
+  id: record.id as string,
+  date: record.date as string,
+  startTime: (record.start_time as string).slice(0, 5), // HH:mm:ss -> HH:mm
+  endTime: (record.end_time as string).slice(0, 5),   // HH:mm:ss -> HH:mm
+  content: record.content as string,
+  memo: record.memo as string | undefined
 })
 
 // Helper to map LogEntry to DB record
@@ -63,7 +63,7 @@ export const storage = {
     } catch (error) {
       console.error('Failed to save to Supabase:', error)
     } finally {
-      const entries = await storage.getEntriesLocal()
+      const entries = storage.getEntriesLocal()
       localStorage.setItem(STORAGE_KEY, JSON.stringify([...entries, entry]))
     }
   },
@@ -79,7 +79,7 @@ export const storage = {
     } catch (error) {
       console.error('Failed to update Supabase:', error)
     } finally {
-      const entries = await storage.getEntriesLocal()
+      const entries = storage.getEntriesLocal()
       const updatedEntries = entries.map(e => e.id === id ? { ...e, ...updatedEntry } : e)
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEntries))
     }
@@ -96,7 +96,7 @@ export const storage = {
     } catch (error) {
       console.error('Failed to delete from Supabase:', error)
     } finally {
-      const entries = await storage.getEntriesLocal()
+      const entries = storage.getEntriesLocal()
       localStorage.setItem(STORAGE_KEY, JSON.stringify(entries.filter(e => e.id !== id)))
     }
   },
